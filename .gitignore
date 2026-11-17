@@ -30,3 +30,7 @@ tsconfig.tsbuildinfo
 
 # Supabase CLI scratch state (project ref, not for source control)
 supabase/.temp/
+
+.vercel
+.env
+.env.local

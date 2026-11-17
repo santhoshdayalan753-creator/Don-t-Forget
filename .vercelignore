@@ -1,0 +1,8 @@
+# Never upload local secrets or build artifacts to Vercel
+.env
+.env.local
+.env.*
+!.env.example
+node_modules
+dist
+supabase/.temp
