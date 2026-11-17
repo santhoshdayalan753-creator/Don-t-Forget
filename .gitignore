@@ -27,3 +27,6 @@ tsconfig.tsbuildinfo
 # Environment local files
 .env
 .env*.local
+
+# Supabase CLI scratch state (project ref, not for source control)
+supabase/.temp/

@@ -197,10 +197,12 @@ export const SignupPage: React.FC = () => {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmNeeded, setConfirmNeeded] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setConfirmNeeded(false);
 
     if (password !== confirmPassword) {
       setError('Passwords do not match. Please re-enter.');
@@ -222,6 +224,8 @@ export const SignupPage: React.FC = () => {
     setLoading(false);
     if (res.error) {
       setError(res.error);
+    } else if (res.confirmationRequired) {
+      setConfirmNeeded(true);
     } else {
       navigate('/dashboard');
     }
@@ -240,110 +244,130 @@ export const SignupPage: React.FC = () => {
         </div>
 
         {error && (
-          <div className="p-3 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 rounded-xl flex items-center gap-2 text-rose-700 dark:text-rose-300 text-xs">
-            <AlertCircle className="w-4 h-4 shrink-0" />
+          <div className="p-3 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 rounded-xl flex items-start gap-2 text-rose-700 dark:text-rose-300 text-xs leading-relaxed">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
             <span>{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4 text-xs sm:text-sm">
-          <div>
-            <label className="block text-slate-600 dark:text-slate-400 font-medium mb-1">Your Full Name</label>
-            <div className="relative">
-              <User className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
-              <input
-                type="text"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Alex Morgan"
-                className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white"
-              />
+        {confirmNeeded ? (
+          <div className="p-4 bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-900 rounded-xl text-xs space-y-3">
+            <div className="flex items-center gap-2 font-bold text-indigo-800 dark:text-indigo-200 text-sm">
+              <CheckCircle className="w-5 h-5 text-indigo-600" />
+              <span>Verification email sent!</span>
             </div>
-          </div>
-
-          <div>
-            <label className="block text-slate-600 dark:text-slate-400 font-medium mb-1">Email address</label>
-            <div className="relative">
-              <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-slate-600 dark:text-slate-400 font-medium mb-1">Password</label>
-            <div className="relative">
-              <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
-              <input
-                type={showPassword ? 'text' : 'password'}
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full pl-9 pr-10 py-2.5 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
+            <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
+              We have sent a confirmation link to <strong className="text-indigo-600 font-mono">{email}</strong>. Please click the link in your inbox to activate your account, then log in.
+            </p>
+            <div className="pt-2">
+              <Link
+                to="/login"
+                className="w-full block py-2.5 text-center bg-indigo-600 text-white font-semibold rounded-xl"
               >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
+                Go to Sign In
+              </Link>
             </div>
           </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4 text-xs sm:text-sm">
+            <div>
+              <label className="block text-slate-600 dark:text-slate-400 font-medium mb-1">Your Full Name</label>
+              <div className="relative">
+                <User className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
+                <input
+                  type="text"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Alex Morgan"
+                  className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white"
+                />
+              </div>
+            </div>
 
-          <div>
-            <label className="block text-slate-600 dark:text-slate-400 font-medium mb-1">Confirm Password</label>
-            <div className="relative">
-              <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
+            <div>
+              <label className="block text-slate-600 dark:text-slate-400 font-medium mb-1">Email address</label>
+              <div className="relative">
+                <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-slate-600 dark:text-slate-400 font-medium mb-1">Password</label>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full pl-9 pr-10 py-2.5 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-slate-600 dark:text-slate-400 font-medium mb-1">Confirm Password</label>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-start gap-2 pt-1">
               <input
-                type={showPassword ? 'text' : 'password'}
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white"
+                type="checkbox"
+                id="terms"
+                checked={acceptTerms}
+                onChange={(e) => setAcceptTerms(e.target.checked)}
+                className="mt-1 rounded text-indigo-600 focus:ring-indigo-500"
               />
+              <label htmlFor="terms" className="text-xs text-slate-600 dark:text-slate-400 leading-snug">
+                I accept the{' '}
+                <a href="#terms-modal" className="text-indigo-600 underline">Terms of Service</a> and{' '}
+                <a href="#privacy-modal" className="text-indigo-600 underline">Privacy Policy</a>
+              </label>
             </div>
-          </div>
 
-          <div className="flex items-start gap-2 pt-1">
-            <input
-              type="checkbox"
-              id="terms"
-              checked={acceptTerms}
-              onChange={(e) => setAcceptTerms(e.target.checked)}
-              className="mt-1 rounded text-indigo-600 focus:ring-indigo-500"
-            />
-            <label htmlFor="terms" className="text-xs text-slate-600 dark:text-slate-400 leading-snug">
-              I accept the{' '}
-              <a href="#terms-modal" className="text-indigo-600 underline">Terms of Service</a> and{' '}
-              <a href="#privacy-modal" className="text-indigo-600 underline">Privacy Policy</a>
-            </label>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
-          >
-            {loading ? (
-              <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <>
-                <span>Create Free Account</span>
-                <ArrowRight className="w-4 h-4" />
-              </>
-            )}
-          </button>
-        </form>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <>
+                  <span>Create Free Account</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+          </form>
+        )}
 
         <div className="pt-2 text-center text-xs text-slate-500 border-t border-slate-100 dark:border-slate-800">
           Already registered?{' '}

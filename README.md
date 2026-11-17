@@ -126,7 +126,9 @@ VITE_NOTIFICATION_WEBHOOK_URL=https://your-project.supabase.co/functions/v1/send
 ### 4. Database Setup (Supabase)
 1. Go to your [Supabase Dashboard](https://supabase.com/dashboard) → **SQL Editor**.
 2. Run the SQL schema from [`supabase/schema.sql`](supabase/schema.sql).
-3. *(Optional)* Run [`supabase/cron_setup.sql`](supabase/cron_setup.sql) to enable automated background reminder triggers.
+3. *([Optional](#scheduled-reminders--email-delivery))* Run [`supabase/cron_setup.sql`](supabase/cron_setup.sql) to enable automated background reminder triggers.
+
+> **Production checklist:** see [`SUPABASE_SETUP.md`](SUPABASE_SETUP.md) for auth redirect URLs, SMTP, edge function secrets, Vercel env vars and the end-to-end database test suite (`npm run test:e2e`).
 
 ### 5. Start Development Server
 ```bash

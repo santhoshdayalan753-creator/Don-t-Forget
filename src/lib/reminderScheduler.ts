@@ -83,7 +83,8 @@ export class ReminderScheduler {
   public static async sendTestEmail(
     userEmail: string,
     userName: string,
-    endpointUrl?: string
+    endpointUrl?: string,
+    accessToken?: string
   ): Promise<{ success: boolean; message: string }> {
     if (!userEmail) {
       return { success: false, message: 'No registered user email found.' };
@@ -102,7 +103,13 @@ export class ReminderScheduler {
       try {
         const res = await fetch(endpointUrl, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+            // The edge function requires a real user JWT and derives the
+            // recipient from it, so an anonymous caller cannot send mail.
+            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
+          },
           body: JSON.stringify(payload)
         });
         const data = await res.json();
@@ -118,7 +125,8 @@ export class ReminderScheduler {
           });
           return { success: true, message: `Email accepted by provider for ${userEmail}!` };
         } else {
-          return { success: false, message: data.error || 'Failed to dispatch email' };
+          const detail = typeof data.error === 'string' ? data.error : data.error?.message;
+          return { success: false, message: detail || `Failed to dispatch email (HTTP ${res.status})` };
         }
       } catch (err: any) {
         return { success: false, message: err.message || 'Network error reaching email endpoint' };
@@ -152,6 +160,8 @@ export class ReminderScheduler {
       userName?: string;
       onInAppAdded?: (newNotifications: AppNotification[]) => void;
       webhookUrl?: string;
+      /** Called once per delivered reminder so the caller can persist a DB log. */
+      onDispatched?: (memory: MemoryItem, channel: 'browser' | 'email' | 'in_app') => void;
     }
   ): Promise<AppNotification[]> {
     const now = new Date();
@@ -217,6 +227,10 @@ export class ReminderScheduler {
 
           currentInApp = [inAppItem, ...currentInApp];
           hasNewInApp = true;
+
+          if (options?.onDispatched) {
+            options.onDispatched(memory, 'in_app');
+          }
 
           // 3. Dispatch Scheduled Email to registered user
           if (options?.userEmail) {

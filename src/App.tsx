@@ -18,6 +18,7 @@ import { MemoryProvider } from './context/MemoryContext';
 import { Layout } from './components/Layout';
 import { LandingPage } from './pages/LandingPage';
 import { LoginPage, SignupPage } from './pages/AuthPages';
+import { ResetPasswordPage, AuthCallbackPage } from './pages/ResetPasswordPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ShoppingPage } from './pages/ShoppingPage';
 import { GenericMemoryView } from './pages/GenericMemoryView';
@@ -72,6 +73,8 @@ export const App: React.FC = () => {
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
               {/* Protected App Pages */}
               <Route

@@ -18,14 +18,14 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useMemories } from '../context/MemoryContext';
-import { isSupabaseConfigured } from '../lib/supabase';
+import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { isGAConfigured } from '../lib/analytics';
 import { ReminderScheduler, EmailDispatchRecord } from '../lib/reminderScheduler';
 
 export const SettingsPage: React.FC = () => {
   const { user } = useAuth();
   const { theme, setTheme } = useTheme();
-  const { memories } = useMemories();
+  const { memories, dbError } = useMemories();
 
   // Notification States
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(
@@ -95,7 +95,13 @@ export const SettingsPage: React.FC = () => {
     setTestEmailResult(null);
 
     const webhookUrl = (import.meta.env.VITE_NOTIFICATION_WEBHOOK_URL as string) || undefined;
-    const res = await ReminderScheduler.sendTestEmail(user.email, user.name || 'User', webhookUrl);
+    const session = isSupabaseConfigured ? (await supabase.auth.getSession()).data.session : null;
+    const res = await ReminderScheduler.sendTestEmail(
+      user.email,
+      user.name || 'User',
+      webhookUrl,
+      session?.access_token
+    );
 
     setSendingTestEmail(false);
     setTestEmailResult(res);
@@ -393,6 +399,12 @@ export const SettingsPage: React.FC = () => {
               {isSupabaseConfigured ? 'Supabase RLS' : 'Local DB'}
             </span>
           </div>
+
+          {dbError && (
+            <p className="p-2.5 rounded-lg bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 text-[11px] leading-relaxed break-words">
+              Database error: {dbError}
+            </p>
+          )}
 
           <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60">
             <div>
