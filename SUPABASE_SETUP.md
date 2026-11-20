@@ -13,9 +13,15 @@ The code is already wired to this schema; this file is the operational checklist
 >   Verified end-to-end: a due reminder produced a `reminder_dispatch_logs` row.
 > - Vault secrets `project_url` / `service_role_key` created; function secrets
 >   `CRON_SECRET`, `SERVICE_ROLE_KEY`, `ANON_KEY` set.
-> - **Still open:** `RESEND_API_KEY` + `SENDER_EMAIL` (deliveries are recorded as
->   `skipped` until set), custom SMTP, and the production Site URL (currently
->   `http://localhost:5173` plus `https://*.vercel.app/**` — tighten once the domain exists).
+> - Function secrets `RESEND_API_KEY` + `SENDER_EMAIL` (`onboarding@resend.dev`)
+>   are set. Verified live: a due reminder went through `pg_cron` → worker → Resend
+>   and the ledger recorded `status = delivered` with a provider message id.
+>   Without a verified domain, Resend only delivers to the account owner's inbox.
+> - `profiles.email_notifications_enabled` defaults to **true** (opt-out) and the
+>   Settings toggle persists it, so the worker no longer skips users with
+>   `user_disabled_email`.
+> - **Still open:** custom SMTP, and tightening the `https://*.vercel.app/**`
+>   redirect wildcard once a custom domain exists.
 > - Email confirmation is **ON**, so new signups must verify before signing in.
 >
 > The SQL in this repo is idempotent, so re-running it only creates/repairs objects —
@@ -250,7 +256,7 @@ auth UX your users will see.
 - [ ] `supabase/schema.sql` applied on the new project; verification queries pass
 - [ ] Auth Site URL + all redirect URLs registered
 - [ ] Custom SMTP configured (or "Confirm email" off for a demo)
-- [ ] Edge functions deployed; `RESEND_API_KEY` + `SENDER_EMAIL` set
+- [x] Edge functions deployed; `RESEND_API_KEY` + `SENDER_EMAIL` set
 - [ ] Vault secrets + `cron_setup.sql` applied; `net._http_response` shows 200
 - [ ] Vercel env vars set and a fresh deploy made
 - [ ] `npm run test:e2e:preflight` passes against the production project

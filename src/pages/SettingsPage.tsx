@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   User, 
   Bell, 
@@ -42,6 +42,27 @@ export const SettingsPage: React.FC = () => {
     return localStorage.getItem('dontforget_timezone') || 'Asia/Kolkata';
   });
 
+  // The scheduler worker emails users whose *profile* flag is on, so read that
+  // flag instead of trusting a browser-local toggle.
+  useEffect(() => {
+    if (!isSupabaseConfigured || !user?.id) return;
+    let active = true;
+    void supabase
+      .from('profiles')
+      .select('email_notifications_enabled')
+      .eq('id', user.id)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (!active || error || !data) return;
+        const enabled = data.email_notifications_enabled !== false;
+        setEmailAlertsEnabled(enabled);
+        localStorage.setItem('dontforget_email_alerts', String(enabled));
+      });
+    return () => {
+      active = false;
+    };
+  }, [user?.id]);
+
   // Test Email Sending State
   const [sendingTestEmail, setSendingTestEmail] = useState(false);
   const [testEmailResult, setTestEmailResult] = useState<{ success: boolean; message: string } | null>(null);
@@ -76,6 +97,18 @@ export const SettingsPage: React.FC = () => {
     const next = !emailAlertsEnabled;
     setEmailAlertsEnabled(next);
     localStorage.setItem('dontforget_email_alerts', String(next));
+
+    // The scheduler worker only emails users whose profile flag is on, so the
+    // toggle must persist to the database and not just to this browser.
+    if (isSupabaseConfigured && user?.id) {
+      void supabase
+        .from('profiles')
+        .update({ email_notifications_enabled: next, updated_at: new Date().toISOString() })
+        .eq('id', user.id)
+        .then(({ error }) => {
+          if (error) console.warn('Could not save email notification preference:', error.message);
+        });
+    }
   };
 
   const handleToggleGlobalReminders = () => {

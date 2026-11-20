@@ -44,7 +44,7 @@ create table if not exists public.profiles (
   theme_preference text default 'system',
   timezone text default 'UTC',
   browser_notifications_enabled boolean default true,
-  email_notifications_enabled boolean default false,
+  email_notifications_enabled boolean default true,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
@@ -56,7 +56,9 @@ alter table public.profiles add column if not exists avatar_url text;
 alter table public.profiles add column if not exists theme_preference text default 'system';
 alter table public.profiles add column if not exists timezone text default 'UTC';
 alter table public.profiles add column if not exists browser_notifications_enabled boolean default true;
-alter table public.profiles add column if not exists email_notifications_enabled boolean default false;
+alter table public.profiles add column if not exists email_notifications_enabled boolean default true;
+-- Email reminders are opt-out; keep existing projects converged too.
+alter table public.profiles alter column email_notifications_enabled set default true;
 alter table public.profiles add column if not exists created_at timestamp with time zone default timezone('utc'::text, now()) not null;
 alter table public.profiles add column if not exists updated_at timestamp with time zone default timezone('utc'::text, now()) not null;
 
