@@ -114,11 +114,14 @@ Deno.serve(async (req) => {
   }
 
   if (!RESEND_API_KEY) {
+    // Structured, user-facing failure: the client renders `error` directly, so it
+    // must never contain shell commands or secret names.
     return json({
       success: false,
       simulated: true,
+      code: "email_not_configured",
       error:
-        "RESEND_API_KEY is not configured. Run: supabase secrets set RESEND_API_KEY=re_... SENDER_EMAIL=\"Don't Forget <reminders@yourdomain.com>\"",
+        "Email delivery is not configured for this project yet. Reminders still arrive in-app and as browser notifications.",
     }, 503);
   }
 
@@ -147,6 +150,15 @@ Deno.serve(async (req) => {
     });
 
     const data = await res.json().catch(() => ({}));
+    if (res.status === 401 || res.status === 403) {
+      // Bad/expired provider credentials: report it without echoing key material.
+      console.error("resend auth rejected", data?.message ?? res.status);
+      return json({
+        success: false,
+        code: "email_provider_rejected",
+        error: "The email provider rejected the configured credentials.",
+      }, 502);
+    }
     if (!res.ok) return json({ error: data?.message ?? "Email provider rejected the request" }, res.status);
 
     return json({ success: true, messageId: data?.id ?? null, deliveredTo: user.email });

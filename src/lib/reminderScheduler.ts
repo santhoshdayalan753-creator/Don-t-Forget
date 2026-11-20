@@ -25,6 +25,19 @@ export interface EmailDispatchRecord {
   error?: string;
 }
 
+/**
+ * Normalises email-dispatch failures into copy a user can act on. Setup
+ * instructions or secret names must never reach the UI.
+ */
+const friendlyEmailError = (detail: string | undefined, status: number): string => {
+  if (/resend_api_key|supabase secrets set|not configured/i.test(detail ?? '')) {
+    return "Email delivery isn't configured on this project yet. Reminders still arrive in-app and as browser notifications.";
+  }
+  if (status === 429) return 'The email provider is rate limiting — try again in a minute.';
+  if (status === 502 || status === 503) return 'The email service is temporarily unavailable — try again shortly.';
+  return detail || `Failed to dispatch email (HTTP ${status})`;
+};
+
 export class ReminderScheduler {
   private static getDispatchedKeys(): Set<string> {
     try {
@@ -124,9 +137,11 @@ export class ReminderScheduler {
             status: 'sent'
           });
           return { success: true, message: `Email accepted by provider for ${userEmail}!` };
+        } else if (res.status === 401) {
+          return { success: false, message: 'Your session expired — sign in again, then retry the test email.' };
         } else {
           const detail = typeof data.error === 'string' ? data.error : data.error?.message;
-          return { success: false, message: detail || `Failed to dispatch email (HTTP ${res.status})` };
+          return { success: false, message: friendlyEmailError(detail, res.status) };
         }
       } catch (err: any) {
         return { success: false, message: err.message || 'Network error reaching email endpoint' };
