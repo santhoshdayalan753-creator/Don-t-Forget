@@ -93,6 +93,26 @@ alter table public.memories add column if not exists timezone text default 'UTC'
 -- Never allow a NULL owner: a client that forgets user_id still inserts as itself.
 alter table public.memories alter column user_id set default auth.uid();
 
+-- A column DEFAULT only covers omitted columns, so an explicit `metadata: null`
+-- (older cached bundles, third-party clients) would still raise 23502. Normalize
+-- it on the way in so the NOT NULL contract always holds.
+create or replace function public.memories_normalize_metadata()
+returns trigger
+language plpgsql
+as $$
+begin
+  if new.metadata is null then
+    new.metadata := '{}'::jsonb;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists memories_normalize_metadata on public.memories;
+create trigger memories_normalize_metadata
+  before insert or update on public.memories
+  for each row execute function public.memories_normalize_metadata();
+
 -- ---------------------------------------------------------------------------
 -- Table: reminder_dispatch_logs
 -- Server-side idempotency ledger: one row per (memory, channel, schedule).

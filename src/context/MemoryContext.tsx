@@ -197,6 +197,9 @@ export const MemoryProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const payload = {
       ...data,
       user_id: userId,
+      // `metadata` is NOT NULL in Postgres; a default only applies to omitted
+      // columns, so normalize here to keep null/undefined out of the insert.
+      metadata: data.metadata ?? {},
       reminder_enabled: data.reminder_enabled ?? true,
       timezone: data.timezone || userTimezone,
       created_at: new Date().toISOString(),

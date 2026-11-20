@@ -181,7 +181,9 @@ export const QuickSaveBar: React.FC<QuickSaveBarProps> = ({ onSaved, defaultCate
         due_date: finalDueDate,
         reminder_enabled: reminderEnabled && Boolean(finalDueDate),
         priority,
-        metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
+        // Always send an object: an explicit null would replace the column
+        // default and Postgres rejects it with 23502.
+        metadata,
       });
 
       // Reset form states
