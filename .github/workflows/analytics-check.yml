@@ -1,0 +1,62 @@
+name: Verify GA4 analytics wiring
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  GA_MEASUREMENT_ID: G-WRDR3KD6EQ
+  PRODUCTION_URL: https://dont-forget-mu-blue.vercel.app
+
+jobs:
+  build-and-verify:
+    name: Build and check the tag ships
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - name: GA4 tag is present in dist/index.html
+        run: |
+          set -euo pipefail
+          grep -q "googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}" dist/index.html
+          grep -q "gtag('config', '${GA_MEASUREMENT_ID}'" dist/index.html
+          echo "GA4 tag for ${GA_MEASUREMENT_ID} is present in dist/index.html"
+
+      - name: Google serves gtag.js for the measurement ID
+        run: |
+          set -euo pipefail
+          status=$(curl -s -o /dev/null -w '%{http_code}' "https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}")
+          echo "gtag.js HTTP status: ${status}"
+          test "${status}" = "200"
+
+  production-smoke:
+    name: Production serves the tag
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    needs: build-and-verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Poll production for the GA4 tag (allows for Vercel deploy time)
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 12); do
+            html=$(curl -fsSL "${PRODUCTION_URL}" || true)
+            if printf '%s' "${html}" | grep -q "googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}"; then
+              echo "Production serves the GA4 tag for ${GA_MEASUREMENT_ID} (attempt ${attempt})"
+              exit 0
+            fi
+            echo "Attempt ${attempt}: tag not live yet, retrying in 15s"
+            sleep 15
+          done
+          echo "Production did not serve the GA4 tag for ${GA_MEASUREMENT_ID}" >&2
+          exit 1
