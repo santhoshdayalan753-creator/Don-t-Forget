@@ -10,7 +10,30 @@ declare global {
   }
 }
 
-const GA_MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID || 'G-0SHNQET22C';
+const FALLBACK_GA_MEASUREMENT_ID = 'G-WRDR3KD6EQ';
+
+/**
+ * The gtag.js tag in index.html is the single source of truth, so the app's
+ * own events can never drift from the property the tag reports to (a stale
+ * VITE_GA_MEASUREMENT_ID in the host's env would otherwise split traffic).
+ * The env var is only used when the tag is absent.
+ */
+const resolveMeasurementId = (): string => {
+  if (typeof document !== 'undefined') {
+    const tag = document.querySelector<HTMLScriptElement>(
+      'script[src*="googletagmanager.com/gtag/js?id="]'
+    );
+    const match = tag?.src.match(/[?&]id=(G-[A-Z0-9]+)/i);
+    if (match) return match[1];
+  }
+
+  const envId = import.meta.env.VITE_GA_MEASUREMENT_ID as string | undefined;
+  if (envId && envId !== 'G-XXXXXXXXXX' && envId.startsWith('G-')) return envId;
+
+  return FALLBACK_GA_MEASUREMENT_ID;
+};
+
+export const GA_MEASUREMENT_ID = resolveMeasurementId();
 
 export const isGAConfigured = (): boolean => {
   return (
@@ -62,6 +85,9 @@ export const trackPageView = (path: string, title?: string) => {
     if (window.gtag) {
       window.gtag('event', 'page_view', {
         page_path: path,
+        // GA4 needs page_location for SPA route changes; without it every
+        // route is attributed to the URL the document was first loaded on.
+        page_location: `${window.location.origin}${path}`,
         page_title: title || document.title,
       });
     }

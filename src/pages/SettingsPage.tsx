@@ -19,7 +19,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useMemories } from '../context/MemoryContext';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
-import { isGAConfigured } from '../lib/analytics';
+import { GA_MEASUREMENT_ID, isGAConfigured } from '../lib/analytics';
 import { ReminderScheduler, EmailDispatchRecord } from '../lib/reminderScheduler';
 
 export const SettingsPage: React.FC = () => {
@@ -443,7 +443,7 @@ export const SettingsPage: React.FC = () => {
             <div>
               <p className="font-semibold text-slate-800 dark:text-slate-200">Google Analytics 4 (GA4)</p>
               <p className="text-slate-500 text-[11px]">
-                Measurement ID: {import.meta.env.VITE_GA_MEASUREMENT_ID || 'Not set'}
+                Measurement ID: {GA_MEASUREMENT_ID}
               </p>
             </div>
             <span className={`px-2 py-0.5 rounded-md font-bold text-[10px] ${
