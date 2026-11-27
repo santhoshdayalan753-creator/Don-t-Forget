@@ -138,8 +138,9 @@ npm run dev               # http://localhost:5173
 VITE_SUPABASE_URL=https://<project-ref>.supabase.co
 VITE_SUPABASE_ANON_KEY=<anon or publishable key>
 VITE_NOTIFICATION_WEBHOOK_URL=https://<project-ref>.supabase.co/functions/v1/send-reminder-email
-VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX   # optional
 ```
+
+GA4 is not configured through env vars — set the measurement ID in the gtag.js snippet in [`index.html`](index.html), which is the single source of truth for both the tag and the app's events.
 
 Only `VITE_*` values reach the browser. **Never** put a service role key, Resend key, or access token behind a `VITE_` prefix.
 

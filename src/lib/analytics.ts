@@ -13,10 +13,9 @@ declare global {
 const FALLBACK_GA_MEASUREMENT_ID = 'G-WRDR3KD6EQ';
 
 /**
- * The gtag.js tag in index.html is the single source of truth, so the app's
- * own events can never drift from the property the tag reports to (a stale
- * VITE_GA_MEASUREMENT_ID in the host's env would otherwise split traffic).
- * The env var is only used when the tag is absent.
+ * The gtag.js tag in index.html is the single source of truth. Nothing else
+ * (env var, host setting) can point page views at a different property, which
+ * is what silently split traffic before.
  */
 const resolveMeasurementId = (): string => {
   if (typeof document !== 'undefined') {
@@ -26,9 +25,6 @@ const resolveMeasurementId = (): string => {
     const match = tag?.src.match(/[?&]id=(G-[A-Z0-9]+)/i);
     if (match) return match[1];
   }
-
-  const envId = import.meta.env.VITE_GA_MEASUREMENT_ID as string | undefined;
-  if (envId && envId !== 'G-XXXXXXXXXX' && envId.startsWith('G-')) return envId;
 
   return FALLBACK_GA_MEASUREMENT_ID;
 };

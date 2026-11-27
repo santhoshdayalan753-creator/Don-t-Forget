@@ -137,10 +137,9 @@ VITE_SUPABASE_ANON_KEY=YOUR-ANON-OR-PUBLISHABLE-KEY
 
 # Optional but needed for the Settings → "Send Test Email" button
 VITE_NOTIFICATION_WEBHOOK_URL=https://YOUR-NEW-PROJECT-REF.supabase.co/functions/v1/send-reminder-email
-
-# Optional analytics
-VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX
 ```
+
+GA4 is configured in the gtag.js snippet in `index.html`, not through an env var.
 
 Vercel → Project → **Settings → Environment Variables** (Production + Preview):
 
